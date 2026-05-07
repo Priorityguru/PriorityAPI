@@ -749,7 +749,7 @@ app.post('/api/approve-bank-Reconciliation', async (req, res) => {
             }
         }
 
-        // התנתקות מפריוריטי
+        // התנתקות 
         try { await priority.logout(); } catch(e) {}
 
         console.log("✅ סיום בהצלחה!");
