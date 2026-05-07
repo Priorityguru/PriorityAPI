@@ -607,12 +607,13 @@ app.post('/api/approve-bank-Reconciliation', async (req, res) => {
         response = await axios.get(baseURL + formname, { headers, params});
 
         const bankPageCredit = response.data.value[0].CREDIT ;
+        const bankPageDebit = response.data.value[0].DEBIT ;
         const bankPageFncdate = response.data.value[0].FNCDATE ;
         const bankPageDetails = response.data.value[0].DETAILS ;
         const date = bankPageFncdate.replace(/([+-]\d{2}:\d{2}|Z)$/, 'Z');
 
         params = {
-            "$filter": "FRST_FNCDATE eq " + date + " AND FRST_SUM eq " + bankPageCredit + " AND FRST_DETAILS eq '" + bankPageDetails + "'"
+            "$filter": "FRST_FNCDATE eq " + date + " AND FRST_SUM eq " + (bankPageCredit - bankPageDebit) + " AND FRST_DETAILS eq '" + bankPageDetails + "'"
         };
         formname = '/BANKRECONSP' ;
 
