@@ -611,9 +611,10 @@ app.post('/api/approve-bank-Reconciliation', async (req, res) => {
         const bankPageFncdate = response.data.value[0].FNCDATE ;
         const bankPageDetails = response.data.value[0].DETAILS ;
         const date = bankPageFncdate.replace(/([+-]\d{2}:\d{2}|Z)$/, 'Z');
-
+        
         params = {
-            "$filter": "FRST_FNCDATE eq " + date + " AND FRST_SUM eq " + (bankPageCredit - bankPageDebit) + " AND FRST_DETAILS eq '" + bankPageDetails + "'"
+            "$filter": "FRST_FNCDATE eq " + date + " AND FRST_SUM eq " + (bankPageCredit - bankPageDebit) + 
+            " AND FRST_DETAILS eq '" + bankPageDetails.replaceAll("'", "''") + "'"
         };
         formname = '/BANKRECONSP' ;
 
@@ -734,7 +735,7 @@ app.post('/api/approve-bank-Reconciliation', async (req, res) => {
                 console.log(messages);
             }
 
-            if (['warning', 'message', 'WRNMSG'].includes(step.type)) {
+            if (['warning', 'message', 'WRNMSG', 'inputFields'].includes(step.type)) {
                 console.log(`⚠️ אזהרה: "${step.message}".`);
                 try {
                     step = await step.proc.inputFields(1, {}); 
