@@ -837,7 +837,7 @@ app.post('/api/get-bank-Reconciliation', async (req, res) => {
 
             ereconnum = response.data.value[0].ERECONNUM ;
 
-            console.log(`התקבל מספר משתמש לפי שם משתמש: ${ereconnum}`);
+            console.log(`התקבלה מספר התאמה לפי דף ושורת בנק : ${ereconnum}`);
 
             if (ereconnum === 0){
                 return res.json({ 
@@ -847,10 +847,10 @@ app.post('/api/get-bank-Reconciliation', async (req, res) => {
                 });
             }
         } catch (error) {
-            console.log(`נכשלה קבלת מספר משתמש לפי שם משתמש`);
+            console.log(`נכשלה קבלת מספר התאמה לפי דף ושורת בנק`);
             return res.status(500).json({ 
             status: "error", 
-            message: "נכשלה קבלת מספר משתמש לפי שם משתמש" + error.message
+            message: "נכשלה קבלת מספר התאמה לפי דף ושורת בנק" + error.message
             });
         }
 
