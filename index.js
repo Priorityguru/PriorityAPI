@@ -73,7 +73,7 @@ app.post('/api/close-tiv', async (req, res) => {
                         field: fieldId,     // מזהה השדה (בדרך כלל 1)
                         value: ivNum.toString() // הערך לשליחה
                     }
-                ]
+                ]   
             };
 
             console.log("3. שולח ערך:", ivNum);
@@ -101,10 +101,29 @@ app.post('/api/close-tiv', async (req, res) => {
 
         console.log("✅ סיום בהצלחה!");
 
+        // Get IVNUM 
+        const axios = require('axios');
+        const userpassword = config.username + ':' + config.password
+        const headers = {
+            'Authorization': 'Basic ' + Buffer.from(userpassword).toString('base64'),
+            'Content-Type': 'application/json'
+        };
+
+        let params = {
+            "$filter": "IV eq " + ivNum
+        };
+        formname = '/TINVOICES' ;
+        const baseURL = config.url + '/' + config.virtualApiUrl + '/' + config.tabulaini + '/' + config.company    
+
+        response = await axios.get(baseURL + formname, { headers, params});
+
+        const IVNUMBER = response.data.value[0].IVNUM ;
+
         return res.json({ 
             status: "success", 
             stepType: step.type,
-            messages: messages 
+            messages: messages ,
+            iv: IVNUMBER
         });
 
     } catch (error) {
