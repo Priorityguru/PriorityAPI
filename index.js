@@ -854,6 +854,13 @@ app.post('/api/get-bank-Reconciliation', async (req, res) => {
 
             response = await axios.get(baseURL + formname, { headers, params});
 
+            if (response.data.value.length === 0){
+                return res.status(200).json({ 
+                    status: "error", 
+                    message: "לא נמצא מספר התאמה לפי דף ושורת בנק " 
+                });
+            }
+
             ereconnum = response.data.value[0].ERECONNUM ;
 
             console.log(`התקבלה מספר התאמה לפי דף ושורת בנק : ${ereconnum}`);
