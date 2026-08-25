@@ -897,7 +897,7 @@ app.post('/api/get-bank-Reconciliation', async (req, res) => {
                 } else {
                     const referenceNo = response.data.value[0].IVNUM ;
                     params = {
-                        "$filter": "IVNUM  eq " + referenceNo 
+                        "$filter": "IVNUM eq '" + referenceNo + "'"
                     };
                     formname = '/GENINVOICES' ;
 
