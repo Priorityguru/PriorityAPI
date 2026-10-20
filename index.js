@@ -394,6 +394,109 @@ app.post('/api/prepare-bank-Reconciliation', async (req, res) => {
     }
 });
 
+app.post('/api/cancel-temp-bank-Reconciliation', async (req, res) => {
+    
+    // קליטת הנתונים
+    const inputMap = req.body || {}; 
+    let allMessages = []; 
+    let stepsCounter = 0;
+
+    const addMsg = (msgSource) => {
+        if (!msgSource) return;
+        const msgs = Array.isArray(msgSource) ? msgSource : [msgSource];
+        msgs.forEach(m => {
+            if (m && typeof m === 'string' && m.trim().length > 0) allMessages.push(m);
+        });
+    };
+
+    try {
+        console.log(`--- מתחיל תהליך CNBANKTMPRECON ---`);
+        console.log("נתוני קלט:", JSON.stringify(inputMap)); 
+
+        if (priority.login && typeof priority.login === 'function') {
+            fillConfig(req)
+            await priority.login(config);
+        }
+        
+        let step = await priority.procStart('CNBANKTMPRECON', 'P', null);
+
+        while (step.type !== 'menu' && step.type !== 'end' && stepsCounter < 100) {
+            stepsCounter++;
+            console.log(`>> צעד ${stepsCounter} | סוג: ${step.type}`);
+            
+            addMsg(step.message);
+            if (step.proc) addMsg(step.proc.message);
+
+            // ---------------------------------------------------------
+            // 1. טיפול בשדות קלט (INPUT) - התיקון: זיהוי לפי כותרת עברית
+            // ---------------------------------------------------------
+            if (step.type === 'inputFields') {
+                console.log("📝 מסך קלט.");
+                let fieldsToSubmit = [];
+                
+                if (step.input && step.input.EditFields) {
+                    for (let field of step.input.EditFields) {
+                        
+                        let valueToSend = "";
+                        
+                        if (field.field === 1) {
+                            valueToSend = "1";
+                        } else if (field.field === 2){
+                            valueToSend = "9999";
+                        }
+                        fieldsToSubmit.push({ field: field.field || field, value: valueToSend.toString() });
+                    }
+                }
+                
+                try {
+                    step = await step.proc.inputFields(1, { EditFields: fieldsToSubmit });
+                    if (step.error) throw new Error(`Priority Error: ${step.error}`);
+                } catch (e) {
+                    console.log("שגיאה ב-inputFields, מנסה להמשיך:", e.message);
+                    step = await step.proc.inputFields(1, {});
+                }
+            } 
+            
+            // ---------------------------------------------------------
+            // 2. טיפול באזהרות (WARNING / MESSAGE)
+            // ---------------------------------------------------------
+            else if (['warning', 'message', 'WRNMSG'].includes(step.type)) {
+                console.log(`⚠️ אזהרה: "${step.message}".`);
+                try {
+                    step = await step.proc.inputFields(1, {}); 
+                    console.log("   -> עבר (Enter)");
+                } catch (e1) {
+                    try {
+                        step = await step.proc.warning(1);
+                        console.log("   -> עבר (warning)");
+                    } catch (e2) {
+                        try { step = await step.proc.message(1); } catch(e) { break; }
+                    }
+                }
+            }
+            
+            // הדפסה
+            else if (step.type === 'reportOptions') {
+                console.log("🖨️ שלב 30! מאשר...");
+                try { step = await step.proc.reportOptions(1, {}); } 
+                catch (e) { step = await step.proc.inputFields(1, {}); }
+            }
+            
+            else if (step.type === 'help') { try { step = await step.proc.help(1); } catch(e) { break; } }
+            else { try { step = await step.proc.inputFields(1, {}); } catch(e) { break; } }
+        }
+
+        console.log(">> סיום. סטטוס:", step.type);
+        if (priority.logout) try { await priority.logout(); } catch(e) {}
+
+        return res.json({ status: "success", messages: allMessages });
+
+    } catch (error) {
+        console.error("❌ שגיאה:", error.message);
+        return res.status(500).json({ status: "error", message: error.message });
+    }
+});
+
 app.post('/api/approve-bank-Reconciliation-using-websdk', async (req, res) => {
     
 	// --- הוספת אבטחה: בדיקת מפתח סודי ---
